@@ -1,0 +1,426 @@
+\chapter{Introduction}
+\label{chap-one}
+\setlength\parindent{0pt}  
+
+\newcommand{\grpint}[1]{\int_{\nu_{g}}^{\nu_{g+1}} \ #1 \ d\nu}
+\newcommand{\angint}[1]{\int_{4\pi} \ #1 \ d\Omega}
+\newcommand{\angintt}[1]{\int_{4\pi} \ #1 \ \bOm d\Omega}
+\newcommand{\grpsum}[1]{\sum_{g=1}^{N_g} \ #1 }
+\newcommand{\grpintb}[1]{\int_{\nu_{g}}^{\nu_{g+1}}\brk{#1}d\nu}
+\newcommand{\angintb}[1]{\int_{4\pi}\brk{#1}d\Omega}
+\newcommand{\anginttb}[1]{\int_{4\pi}\brk{#1}\bOm d\Omega}
+\newcommand{\grpsumb}[1]{\sum_{g=1}^{N_g}\brk{#1}}
+\newcommand{\xint}[1]{\int_{x_{i-\frac{1}{2}}}^{x_{i+\frac{1}{2}}}\brk{#1}dx}
+\newcommand{\xintl}[1]{\int_{x_{i-\frac{1}{2}}}^{x_{i}}\brk{#1}dx}
+\newcommand{\xintr}[1]{\int_{x_{i}}^{x_{i+\frac{1}{2}}}\brk{#1}dx}
+
+\newcommand{\modkapgn}{\kapgn^\tau}
+\newcommand{\modkapgin}{\kapgin^\tau}
+\newcommand{\modkapebin}{\kapebin^\tau}
+\newcommand{\modkaprbirn}{\kaprbirn^\tau}
+\newcommand{\modkapgirn}{\kapgirn^\tau}
+\newcommand{\modkapgirrn}{\kapgirrn^\tau}
+
+\section{Motivation} \label{motivation}
+	Radiative transfer is an essential piece of physics to many high energy-density multiphysical phenomena, such as astrophysical phenomena, inertial-confinement fusion and various laser-driven applications \cite{drake-hedp}. Radiative transfer problems are challenging to solve however; the radiative transfer (RT) equation is high dimensional, and thermal radiative transfer (TRT) problems are highly nonlinear. The RT equation has 7 independent variables, including 3 in space $\pr{x,y,z}$, 2 in angle $\pr{\theta,\phi}$, energy $\pr{E}$ and time $\pr{t}$. TRT problems are characterized by multiple scales and formulated by equations of different types. A strong coupling exists between the radiative transfer equation and multiphysics equations, as the material opacities depend on the state of matter which in turn depends on the flux of particles. 
+	
+	\ind Such challenges spur the need for development of models that may reduce the complexity and computational cost of solving TRT problems. One common method to decrease the cost of TRT problems without losing large amounts of accuracy is to deploy a reduced order model (ROM) for the RT equation. The RT equation tends to determine the dimensionality of TRT problems as it resides in a higher dimensional space than many other multiphysics equations that are used for coupling physics. Thus one may reduce the dimensionality of the RT equation with a given ROM and lower the overall order of the TRT problem. Common ROMs include the diffusion, $P_1$ and $P_{\frac{1}{3}}$ models \cite{olson-auer-hall-2000}, each of which has their own features and drawbacks. These and other ROMs currently utilized in solving TRT problems suffer limitations on accuracy that may not be acceptable for certain simulations. This study develops new ROMs for TRT problems to overcome these limitations and aid in the effort to produce more accurate methods of reducing the order of TRT problems.
+	
+	%\ind The current ROMs that are utilized in TRT problems for the RT equation suffer limitations on accuracy that may not be acceptable for certain simulations. This study applies methods of projection to reduce the dimensionality of the RT equation and formulate a new ROM for TRT problems that avoids these limitations. The quasidiffusion (QD) method \cite{gol'din-1964,dya-vyag-ttsp} is used as the basis for this ROM, which relies on projecting the RT equation into lower dimensional spaces using exact closures.
+	
+	%This study applies methods of projection to reduce the dimensionality of the RT equation. We use the quasidiffusion (QD) method \cite{gol'din-1964,dya-vyag-ttsp} to base our new ROM on, relying on projecting the RT equation into lower dimensional spaces using exact closures. In this way, we are able to formulate a hierarchy of effective low-order transport (ELOT) problems defined for the angular and energy moments of the radiation intensity. The ELOT problem is coupled to multiphysics equations in a projected space of lower dimensionality. 
+
+\section{Thermal Radiative Transfer Problem Formulation}
+	The thermal radiative transfer problem provides a simple model of more complex radiative hydrodynamic problems. It is formulated with two coupled equations, the radiative transfer (RT) and material energy balance (MEB) equations. The RT equation is given in the absence of scattering and models how the radiation intensity changes in a certain phase space due to sources and losses of radiation. The phase space in question is formed by the direction of photon motion $\bOm$, a frequency $\nu$, and a position $\br$. The mathematical formulation of the RT is 
+	%The differential phase space in question is formed by a section of the solid angle $d\bOm$ about some direction $\bOm$, a frequency band $d\nu$ about some frequency $\nu$, and a volume $dV$ about some position $\br$. The mathematical formulation of the RT is 
+	\begin{gather}
+		\frac{1}{c}\dt{\iv\gendep} + \bOm\cdot\grad\iv\gendep + \kapv\pr{T,\nu}\iv\gendep = \kapv\pr{T,\nu}\Bv\pr{T,\nu}, \label{General_RT_eqn}\\
+		\bm{r} \in G, \quad \text{for all } \bOm, \quad t\geq t_0, \quad 0\leq \nu < \infty, \nn
+	\end{gather}
+	
+	with initial condition
+	\begin{equation}
+		\iv|_{t=t_0} = I_{\nu,0} \quad \text{for } \bm{r} \in G \text{ and all } \bOm
+	\end{equation}
+	
+	and boundary condition
+	\begin{equation}
+		\iv|_{r\in\partial G} = \iv^{in} \quad \text{for all } \bOm\cdot e_n < 0,
+	\end{equation}
+	
+	where $G$ is the spatial domain of the problem, $\bm{r}$ denotes spatial position, $\bOm$ is the direction of particle motion, $\nu$ is the photon frequency and $t$ is time. $\iv$ is the specific intensity of radiation, $\kapv$ is the opacity of the medium and $\Bv$ is the Planckian black-body radiation distribution
+	\begin{equation}
+		\Bv\pr{T,\nu} = \frac{2h\nu^3}{c^2}\pr{e^{\frac{h\nu}{kT}} - 1}^{-1}.
+	\end{equation}
+	
+	The MEB equation gives a basic model of how radiation changes material energy due to interaction with matter
+	\begin{equation}
+		\dt{\varepsilon\pr{T}} = \int_{0}^{\infty}d\nu \int_{4\pi}d\Omega \pr{\iv\gendep - \Bv\pr{T,\nu}}\kapv\pr{T,\nu} \label{Energy_Balance}
+	\end{equation}
+	
+	with an initial condition for the material temperature $\pr{T}$
+	\begin{equation}
+		T|_{t=t_0} = T_{0} \quad \text{for } \bm{r} \in G
+	\end{equation}
+	
+	where $\varepsilon\pr{T}$ is the material energy density. Although the TRT problem ignores hydrodynamic effects and scattering interactions of radiation, it is able to capture the overarching challenges encountered in solving radiative hydrodynamic problems. High dimensionality, multiple scales, strong nonlinearity and tight coupling of equations are all seen and make the TRT problem a valuable test platform for new ROMs before being extended to more complex problems.
+	
+%=================================================================================
+% Multigroup RT
+%=================================================================================
+\subsection{Multigroup Thermal Radiative Transfer}
+	The TRT problem is generally solved in multigroup approximation. The multigroup RT equation is derived by integrating the continuous RT \eqn{General_RT_eqn} over groups of the photon frequency $\pr{\nu}$ on the interval $\nu_{g} < \nu < \nu_{g+1}$ where $g=1,\dots,N_g$
+	\begin{multline}
+		\grpintb{\frac{1}{c}\dt{\iv\gendep} + \bOm\cdot\grad\iv\gendep + \kapv\pr{T,\nu}\iv\gendep} \\= \grpint{\kapv\pr{T,\nu}\Bv\pr{T,\nu}}.
+	\end{multline}
+	
+	The multigroup RT equation is thus
+	\begin{gather}
+		\frac{1}{c}\dt{\ig\gendepg} + \bOm\cdot\grad\ig\gendepg + \kapg\pr{T}\ig\gendepg = \kapg\pr{T}\Bg\pr{T}, \label{General_RTg_eqn}\\
+		\bm{r} \in G, \quad \text{for all } \bOm, \quad t\geq t_0, \quad g=1,\dots,N_g, \nn
+	\end{gather}
+	
+	with initial condition
+	\begin{equation}
+		\ig|_{t=t_0} = I_{g,0} \quad \text{for } \bm{r} \in G \text{ and all } \bOm,
+	\end{equation}
+	
+	and boundary condition
+	\begin{equation}
+		\ig|_{r\in\partial G} = \ig^{\text{in}} \quad \text{for all } \bOm\cdot \bm{n} < 0.
+	\end{equation}
+	
+	The group radiation intensity is
+	\begin{equation}
+		\ig\gendepg = \grpint{\iv\gendep},
+	\end{equation}
+	
+	and the group black-body radiation distribution is
+	\begin{equation}
+		\Bg\pr{T} = \grpint{\Bv\pr{T,\nu}}.
+	\end{equation}
+	
+	A single form of the group-averaged opacity has been chosen for \eqn{General_RTg_eqn}, averaged with the black-body radiation distribution $\Bv$
+	\begin{equation}
+		\kapg\pr{T} = \frac{ \grpint{\kapv\pr{T,\nu}\Bv\pr{T,\nu}} }{ \grpint{\Bv\pr{T,\nu}} }. \label{kapg}
+	\end{equation}
+	
+	This defines a particular multigroup approximation of the RT equation. A more accurate averaging function for the group opacity can be used in the absorption rate density term. The MEB equation \eqref{Energy_Balance} can also be rewritten in multigroup form as
+	\begin{equation}
+		\dt{\varepsilon\pr{T}} = \grpsum{\angint{\kapg\pr{T}\pr{\ig\gendepg - \Bg\pr{T}}}}, \label{multig_meb}
+	\end{equation}
+	
+%=================================================================================
+% The Quasidiffusion Method
+%=================================================================================
+\section{Reduced-Order Modeling}
+	This study creates a new set of ROMs for TRT problems combining certain modern era reduced order modeling techniques. To achieve a reduction of dimensionality, we formulate a hierarchy of effective low-order transport (ELOT) problems by means of a multilevel nonlinear projective-iterative (MNPI) methodology \cite{Goldin-sbornik-82,PASE-1986,dya-aristova-vya-mm1996,aristova-vya-avk-m&c1999}. These problems are defined for the angular and energy moments of the specific intensity $\iv$, and with the RT equation define a multilevel set of high-order and low-order equations. This multilevel system is closed exactly using factors that are weakly dependent on the high-order radiative transport solution. With these exact closures the set of ELOT problems remains equivalent to the multigroup RT equation. The weak dependence of the closures to high-order solution also leads to fast convergence of iterations.
+	
+	\ind A set of projections of the RT equation brings it to the same dimensional space, or scale, of multiphysics equations such as the MEB equation. Thus multiphysics equations can be coupled to an ELOT problem in a projected subspace of lower dimensionality than the RT equation while retaining all transport effects. This gives significant advantage compared to other methods in problems where multiphysics coupling is required \cite{adams-larsen-2002}.
+	
+%=================================================================================
+% The Quasidiffusion Method
+%=================================================================================
+\subsection{The Quasidiffusion Method} \label{sec:qd_roms}
+	We adopt the MNPI method known as the multilevel quasidiffusion (MLQD) method to define the set of ELOT problems. The MLQD method for solving TRT problems is a nonlinear method of moments utilizing exact closures whose algorithm takes on a multigrid approach in angle and energy \cite{gol'din-1964,Goldin-sbornik-82,PASE-1986,dya-aristova-vya-mm1996,aristova-vya-avk-m&c1999,adams-larsen-2002}. The MLQD method is formulated on two grids in energy, utilizing multigroup and grey (one-group) equations. It consists of a multilevel set of nonlinearly coupled equations, including the high-order multigroup RT equation \eqref{General_RTg_eqn}, multigroup and grey low-order quasidiffusion systems of equations.
+	% multigroup low-order QD (MLOQD) system \eqref{mqd_sys} and grey low-order QD (GLOQD) system \eqref{gqd_sys}. The QD tensors \eqref{qd_tensor} and \eqref{grey_qdf} are used to close the low-order quasidiffusion (LOQD) systems. The GLOQD system resides on the same dimensional scale as the MEB equation, and is therefore the ELOT problem used to couple with the MEB equation.
+	
+%=================================================================================
+% MLOQD Equations
+%=================================================================================
+\subsubsection{Multigroup Low Order Quasidiffusion Equations}
+	The multigroup low-order quasidiffusion (MLOQD) equations are derived by projecting the high-order RT equation \eqref{General_RTg_eqn} onto a lower dimensional space \cite{gol'din-1964,Goldin-sbornik-82,PASE-1986,dya-aristova-vya-mm1996,aristova-vya-avk-m&c1999}. This projection involves taking the zeroth and first angular moments of the RT equation
+	\begin{subequations}
+		\begin{multline}
+		\angintb{\frac{1}{c}\dt{\ig\gendepg} + \bOm\cdot\grad\ig\gendepg + \kapg\pr{T}\ig\gendepg} \\= \angint{\kapg\pr{T}\Bg\pr{T}},
+		\end{multline}
+		\vspace*{-1cm}
+		\begin{multline}
+		\anginttb{\frac{1}{c}\dt{\ig\gendepg} + \bOm\cdot\grad\ig\gendepg + \kapg\pr{T}\ig\gendepg} \\= \angintt{\kapg\pr{T}\Bg\pr{T}}.
+		\end{multline}
+	\end{subequations}
+	
+	These moment equations are known as the radiation energy balance equation and the radiation momentum balance equation respectively \cite{olson-auer-hall-2000}
+	\begin{subequations}
+		\begin{gather}
+			\dt{\eg\qddepg} + \grad\cdot\bFg\qddepg + c\kapg\pr{T}\eg\qddepg = 4\pi\kapg\pr{T}\Bg\pr{T}, \label{zero_amom} \\
+			\frac{1}{c}\dt{\bFg\qddepg} + \grad\cdot\Hg + \kapg\pr{T}\bFg\qddepg = 0, \label{first_amom}\\
+			\bm{r} \in G, \quad t\geq t_0, \quad g=1,\dots,N_g, \nn
+		\end{gather}
+	\end{subequations}
+	
+	for new unknown functions in the projected space that are the angular moments of the specific intensity, namely, the group radiation energy density
+	\begin{equation}
+		\eg\qddepg = \frac{1}{c}\angint{\ig\gendepg}, \label{egdef}
+	\end{equation}
+	
+	and the group radiation flux
+	\begin{equation}
+		\bFg\qddepg = \angint{\bOm\ig\gendepg}.
+	\end{equation}
+	
+	The tensor $\Hg$ is the second angular moment of the group radiation intensity
+	\begin{equation}
+		\Hg = \angint{\bOm\bOm\ig\gendepg},
+	\end{equation}
+	
+	which presents a third unknown in a system of two equations. An exact closure for the MLOQD system is formed by means of the QD or Eddington tensor \cite{gol'din-1964}
+	\begin{align}
+		\bfg\qddepg = \frac{ \int_{4\pi} \bOm\bOm\ig\gendepg d\Omega }{ \int_{4\pi} \ig\gendepg d\Omega }, \label{qd_tensor}
+	\end{align}
+	
+	%whose components are
+	%\begin{align}
+	%	f_{i,j,g}\qddepg = \frac{ \int_{4\pi} \Omega_i\Omega_j\ig\gendepg d\Omega }{ \int_{4\pi} \ig\gendepg d\Omega },
+	%\end{align}
+	
+	so $\Hg$ becomes
+	\begin{equation}
+		\Hg = c\bfg\qddepg\eg\qddepg. \label{qdhg}
+	\end{equation} 
+	
+	The closed form of the MLOQD equations using \eqref{qdhg} is thus
+	\begin{subequations}
+		\begin{gather}
+			\dt{\eg\qddepg} + \grad\cdot\bFg\qddepg + c\kapg\pr{T}\eg\qddepg = 4\pi\kapg\pr{T}\Bg\pr{T}, \label{mqd_1} \\
+			\frac{1}{c}\dt{\bFg\qddepg} + c\grad\cdot\pr{\bfg\qddepg\eg\qddepg} + \kapg\pr{T}\bFg\qddepg = 0, \label{mqd_2}\\
+			\bm{r} \in G, \quad t\geq t_0, \quad g=1,\dots,N_g, \nn
+		\end{gather}
+		\label{mqd_sys}
+	\end{subequations}	
+	
+	with initial conditions
+	\begin{equation}
+		\eg|_{t=t_0} = E_{g,0}, \quad \bFg|_{t=t_0} = \bm{F}_{g,0} \quad \text{for } \bm{r} \in G
+	\end{equation}
+	
+	and boundary condition \cite{gol'din-1972}
+	\begin{gather}
+		\bm{n}\cdot\bFg\pr{\tilde{\bm{r}},t} = cC_g\pr{\tilde{\bm{r}},t}\pr{\eg\pr{\tilde{\bm{r}},t} - E_g^{\text{in}}\pr{\tilde{\bm{r}},t}} + F_g^{\text{in}}\pr{\tilde{\bm{r}},t},\\ \quad \text{for } \tilde{\bm{r}} \in\partial G \ \text{ and all } \ \bOm\cdot e_n < 0.\nn
+	\end{gather}
+	
+	The boundary factor is given as
+	\begin{equation}
+	C_g\pr{\tilde{\bm{r}},t} = \frac{ \int_{\pr{\bm{n}\cdot\bOm}>0} \pr{\bm{n}\cdot\bOm}\ig\pr{\tilde{\bm{r}},\bOm,t} d\Omega }{ \int_{\pr{\bm{n}\cdot\bOm}>0} \ig\pr{\tilde{\bm{r}},\bOm,t} d\Omega },
+	\end{equation}
+	
+	and the incoming radiation energy density and flux on the problem boundary are derived from the incoming radiation intensity
+	\begin{subequations}
+		\begin{gather}
+		E_g^{\text{in}}\pr{\tilde{\bm{r}},t} = \frac{1}{c}\int_{\bm{n}\cdot\bOm<0} \ig^{\text{in}}\pr{\tilde{\bm{r}},\bOm,t} \ d\Omega, \\
+		\bFg^{\text{in}}\pr{\tilde{\bm{r}},t} = \int_{\bm{n}\cdot\bOm<0} \bOm\ig^{\text{in}}\pr{\tilde{\bm{r}},\bOm,t} \ d\Omega,
+		\end{gather}
+	\end{subequations}	
+	
+	where $\tilde{r} \in\partial G$.
+	
+%=================================================================================
+% GLOQD equations
+%=================================================================================
+\subsubsection{The Effective Grey Problem} \label{eff_gr_prb}
+	The system of MLOQD equations \eqref{mqd_1} and \eqref{mqd_2} can be projected into a lower dimensional space to form a system of grey equations \cite{Goldin-sbornik-82,PASE-1986,dya-aristova-vya-mm1996,aristova-vya-avk-m&c1999}. This projection involves summing the MLOQD Eqs. \eqref{mqd_sys} over groups
+	\begin{gather}
+		\grpsumb{\dt{\eg\qddepg} + \grad\cdot\bFg\qddepg + c\kapg\pr{T}\eg\qddepg} = \grpsum{4\pi\kapg\pr{T}\Bg\pr{T}}, \\
+		\grpsumb{\frac{1}{c}\dt{F_{g,\alpha}\qddepg} + c\sum_{\beta}\dv{}{\beta}\pr{f_{g,\alpha\beta}\qddepg\eg\qddepg} + \kapg\pr{T}F_{g,\alpha}\qddepg} = 0, \label{radmomalpha}\\
+		\bm{r} \in G, \quad t\geq t_0, \quad g=1,\dots,N_g, \quad \alpha=\beta=x,y,z, \nn
+	\end{gather}
+	
+	where Eq. \eqref{radmomalpha} is the component-wise form of the vector Eq. \eqref{mqd_2}. This summation yields the system of equations
+	\begin{subequations}
+		\begin{gather}
+			\dt{\eb\qddepg} + \grad\cdot\bFb\qddepg + c\kapeb\pr{T}\eb\qddepg = c\kapbb\pr{T}\ar T^4, \label{gqd_1.1} \\
+			\frac{1}{c}\dt{F_{\alpha}\qddepg} + c\sum_{\beta}\dv{}{\beta}\pr{\bar{f}_{\alpha\beta}\qddepg\eb\qddepg} + \bar{\varkappa}_{R,\alpha}\pr{T}F_{\alpha}\qddepg + \eta_{\alpha}\qddepg\eb\qddepg= 0. \label{gqd_1.2}\\
+			\bm{r} \in G, \quad t\geq t_0 \quad \alpha=\beta=x,y,z. \nn
+		\end{gather}
+	\end{subequations}
+	
+	After combining all component-wise forms of Eq. \eqref{gqd_1.2}, the grey LOQD (GLOQD) system of equations is thus
+	\begin{subequations}
+		\begin{gather}
+			\dt{\eb\qddepg} + \grad\cdot\bFb\qddepg + c\kapeb\pr{T}\eb\qddepg = c\kapbb\pr{T}\ar T^4, \label{gqd_1} \\
+			\frac{1}{c}\dt{\bFb\qddepg} + c\grad\cdot\pr{\bfb\qddepg\eb\qddepg} + \bar{\bm{\varkappa}}_{R}\pr{T}\bFb\qddepg + \bm{\eta}\qddepg\eb\qddepg= 0, \label{gqd_2}\\
+			\bm{r} \in G, \quad t\geq t_0 , \nn
+		\end{gather}
+		\label{gqd_sys}
+	\end{subequations}
+	
+	where
+	\begin{equation}
+		\ar = \frac{4 \sigma_R}{c},
+	\end{equation}
+	
+	and $\sigma_R$ is the Stefan-Boltzmann constant. There are two new unknown functions in the projected space, the total radiation energy density
+	\begin{equation}
+		\eb\qddepg = \sum_{g=1}^{N_g}\eg\qddepg,
+	\end{equation}
+	
+	and the total radiation flux
+	\begin{equation}
+		\bFb\qddepg = \sum_{g=1}^{N_g}\bFg\qddepg.
+	\end{equation}
+	
+	Initial conditions are
+	\begin{equation}
+		\eb|_{t=t_0} = E_{0}, \quad \bFb|_{t=t_0} = \bm{F}_{0} \quad \text{for } \bm{r} \in G
+	\end{equation}
+	
+	and the boundary condition is
+	\begin{equation}
+		\bm{n}\cdot\bFb\pr{\tilde{\bm{r}},t} = c\bar{C}\pr{\tilde{\bm{r}},t}\pr{\eb\pr{\tilde{\bm{r}},t} - \bar{E}^{\text{in}}\pr{\tilde{\bm{r}},t}} + F^{\text{in}}\pr{\tilde{\bm{r}},t}, \quad \tilde{\bm{r}} \in\partial G.
+	\end{equation}
+	
+	The grey boundary factor is defined as
+	\begin{equation}
+		\bar{C}\pr{\tilde{\bm{r}},t} = \frac{ \sum_{g=1}^{N_g}C_g\pr{\tilde{\bm{r}},t}\pr{\eg\pr{\tilde{\bm{r}},t} - E_g^{\text{in}}\pr{\tilde{\bm{r}},t}} }{ \sum_{g=1}^{N_g}\eg\pr{\tilde{\bm{r}},t} - E_g^{\text{in}}\pr{\tilde{\bm{r}},t} },
+	\end{equation}
+	
+	and the incoming total radiation energy density and flux on the problem boundary are defined by the incoming multigroup radiation energy density and flux
+	\begin{subequations}
+		\begin{gather}
+			E_g^{\text{in}}\pr{\tilde{\bm{r}},t} = \grpsum{E_g^{\text{in}}\pr{\tilde{\bm{r}},t}} \\
+			\bFb^{\text{in}}\pr{\tilde{\bm{r}},t} = \grpsum{\bFg^{\text{in}}\pr{\tilde{\bm{r}},t}}.
+		\end{gather}
+	\end{subequations}
+	
+	There are three distinct grey opacities $\pr{\kapeb,\kapbb,\bar{\bm{\varkappa}}_{R}}$
+	\begin{subequations}
+		\begin{gather}
+			\kapeb\pr{T} = \frac{ \sum_{g=1}^{N_g}\kapg\pr{T}\eg\qddepg }{ \sum_{g=1}^{N_g}\eg\qddepg }, \\[5pt]
+			\kapbb\pr{T} = \frac{ \sum_{g=1}^{N_g}\kapg\pr{T}\Bg\pr{T} }{ \sum_{g=1}^{N_g}\Bg\pr{T} }, \\[5pt]
+			\hspace{2cm} \bar{\varkappa}_{R,\alpha}\pr{T} = \frac{ \sum_{g=1}^{N_g}\kapg\pr{T}\abs{F_{g,\alpha}\qddepg} }{ \sum_{g=1}^{N_g}\abs{F_{g,\alpha}\qddepg} }, \ \alpha=x,y,z, \\[5pt]
+			\bar{\bm{\varkappa}}_{R}\pr{T} = \begin{bmatrix} \bar{\varkappa}_{R,x}\pr{T} & 0 & 0 \\ 0 & \bar{\varkappa}_{R,y}\pr{T} & 0 \\ 0 & 0 & \bar{\varkappa}_{R,z}\pr{T} \end{bmatrix}.
+		\end{gather}
+		\label{grey_opacities}
+	\end{subequations}
+	
+	Each $\bar{\varkappa}_{R,\alpha}$ is averaged with $\abs{F_{g,\alpha}}$ instead of $F_{g,\alpha}$ because the group radiation flux is an alternating function which could result in $\sum_{g=1}^{N_g}F_{g,\alpha}\qddepg = 0$, or very close to zero. A compensation term is constructed with the factor $\bm{\eta}$ in \eqn{gqd_2} as
+	\begin{equation}
+		\bm{\eta}\qddepg = \frac{ \sum_{g=1}^{N_g}\brk{\kapg\pr{T}\bFg\qddepg - \bar{\bm{\varkappa}}_{R}\pr{T}\bFg\qddepg} }{ \sum_{g=1}^{N_g}\eg\qddepg }, \label{eta_comp}
+	\end{equation}
+	
+	or in component form
+	\begin{equation}
+		\eta_{\alpha}\qddepg = \frac{ \sum_{g=1}^{N_g}\brk{\pr{\kapg\pr{T} - \bar{\varkappa}_{R,\alpha}\pr{T}}F_{g,\alpha}\qddepg} }{ \sum_{g=1}^{N_g}\eg\qddepg }, \ \alpha=x,y,z, \label{eta_comp2}
+	\end{equation}
+	
+	such that when $\abs{F_{g,\alpha}} = F_{g,\alpha}$, $\eta_\alpha = 0$. The grey QD tensor is formed with the group QD tensor averaged with the group radiation energy density
+	\begin{align}
+		\bfb\qddepg = \frac{ \sum_{g=1}^{N_g}\bfg\qddepg\eg\qddepg }{ \sum_{g=1}^{N_g}\eg\qddepg }. \label{grey_qdf}
+	\end{align}
+	
+	The multigroup MEB equation \eqref{multig_meb} can be cast as an equation in terms of all grey quantities
+	\begin{equation}
+		\dt{\varepsilon\pr{T}} = c\kapeb\pr{T}\eb\qddepg - c\kapbb\pr{T}\ar T^4. \label{Energy_Balance_gr}
+	\end{equation}
+	
+	The grey LOQD Eqs. \eqref{gqd_sys} and MEB Eq. \eqref{Energy_Balance_gr} are now formulated for the same unknowns and of the same dimensionality. Together they form the effective grey problem.
+	
+%=================================================================================
+% The Multilevel QD Algorithm
+%=================================================================================
+\subsubsection{The Multilevel Quasidiffusion Algorithm} \label{mlqd_alg}
+	\ind The iterative algorithm for solving TRT problems with the MLQD method is depicted in algorithm \ref{alg:mlqd_alg}. The algorithm converges the material temperature $T$ and total radiation energy density $E$ on grids in space and time with a nested set of outer and inner iterations. At each outer iteration $u$, the multigroup RT equation \eqref{General_RTg_eqn} is solved for the multigroup radiation intensity $\ig^{u}$. These intensity values are used to calculate the group QD tensor $\bfg^u$ with equation \eqref{qd_tensor}, which are fixed while performing the inner iterations. For each inner iteration $\ell$, the MLOQD equations \eqref{mqd_sys} are solved for the group radiation energy densities $\eg^{\ell,u}$ and fluxes $\bFg^{\ell,u}$. The grey quantities $\pr{\kapeb^{\ell,u}, \kapbb^{\ell,u}, \bar{\bm{\varkappa}}_{R}^{\ell,u}, \bfb^{\ell,u}, \bm{\eta}^{\ell,u}}$ are all computed and used to solve the coupled system of grey LOQD \eqref{gqd_sys} and MEB \eqref{Energy_Balance_gr} eqs. for the total radiation energy density $\eb^{\ell,u}$, fluxes $\bFb^{\ell,u}$, and material temperature $T^{\ell,u}$. The group opacities $\kapg$ are updated at the end of each inner iteration.
+	
+	%\ind The MLQD method serves as a basis to derive reduced order models (ROMs) for the RT equation with inexact closures using approximate QD factors. Given some approximate closure $\bm{f}_g^*$ for the multigroup LOQD equations \eqref{mqd_sys}, the use of the RT equation would no longer be required. 
+	
+	\begin{algorithm}[ht!]
+		\SetAlgoLined
+		\While{$t^n \leq t^{\text{end}}$}{
+			$n=n+1$\\
+			$T^{\pr{0}} = T^{n-1}$\\
+			\While{$\norm{T^{u}-T^{u-1}} > \epsilon_1\norm{T^{u}} + \epsilon_2, \ \ \norm{\eb^{u}-\eb^{u-1}} > \epsilon_1\norm{\eb^{u}} + \epsilon_2 $}{
+				$u=u+1$\\
+				%Update opacities $\kapg\pr{T^s}$\\
+				Solve multigroup RT eq. \eqref{General_RTg_eqn} for $\ig^{u}$\\
+				Compute group QD tensor $\bfg^u$\\
+				\While{$\norm{T^{\ell,u}-T^{\ell-1,u}} > \tilde{\epsilon}_1\norm{T^{\ell,u}} + \tilde{\epsilon}_2, \ \ \norm{\eb^{\ell,u}-\eb^{\ell-1,u}} > \tilde{\epsilon}_1\norm{\eb^{\ell,u}} + \tilde{\epsilon}_2 $}{
+					$\ell=\ell+1$ \\
+					Solve multigroup LOQD eqs. \eqref{mqd_sys} for $\eg^{\ell,u}$ and $\bFg^{\ell,u}$\\
+					Compute grey quantities $\kapeb^{\ell,u}$, $\kapbb^{\ell,u}$, $\bar{\bm{\varkappa}}_{R}^{\ell,u}$, $\bfb^{\ell,u}$, $\bm{\eta}^{\ell,u}$\\
+					Solve coupled grey LOQD  \eqref{gqd_sys} and MEB \eqref{Energy_Balance_gr} eqs. for $\eb^{\ell,u}$, $\bFb^{\ell,u}$, $T^{\ell,u}$ \\
+					Update opacities $\kapg\pr{T^{\ell,u}}$
+				}
+				$T^s \leftarrow T^{\ell,u}$
+			}
+			$T^n \leftarrow T^u$
+		}
+		\caption{Nonlinear Multilevel QD Iterative Scheme \label{alg:mlqd_alg}}
+	\end{algorithm}
+	
+%=================================================================================
+% Classic ROMs
+%=================================================================================
+\subsection{Classical ROMs for Thermal Radiative Transfer} \label{sec:classical_roms}
+	Many ROMs exist already for TRT problems that are able to circumvent use of the RT Eq. \eqref{General_RTg_eqn} entirely and instead only use a system of equations similar to the LOQD Eqs. \eqref{mqd_sys}. Solving the high-order RT equation is avoided by forming some approximate closure for the LOQD equations to use in place of the QD tensor. The most well-known reduced order model for the RT eq. is the $P_1$ method based on the approximation of the radiation intensity as a linear function of $\bOm$ \cite{olson-auer-hall-2000}
+	\begin{equation}
+		\iv\gendep = a\pr{\bm{r},\nu,t} + \bOm b\pr{\bm{r},\nu,t}.
+	\end{equation}
+	
+	This yields an approximate closure $\bfg = \frac{1}{3}$, which reduces Eqs. \eqref{mqd_sys} to the multigroup $P_1$ equations
+	\begin{subequations}
+		\begin{gather}
+		\dt{\eg\qddepg} + \grad\cdot\bFg\qddepg + c\kapg\pr{T}\eg\qddepg = 4\pi\kapg\pr{T}\Bg\pr{T}, \label{p1_zero}\\
+		\frac{1}{c}\dt{\bFg\qddepg} + \frac{c}{3}\grad\eg\qddepg + \kapg\pr{T}\bFg\qddepg = 0. \label{p1_first}
+		\end{gather}
+		\label{p1_sys}
+	\end{subequations}
+	
+	The $P_1$ equations are correct to first order in the asymptotic diffusion limit, or the optically thick limit \cite{Morel-2000}. Thus one would expect the $P_1$ solution to be fairly accurate when approaching this limit. In the optically thin limit however, the $P_1$ Eqs. give an unphysical propagation velocity of streaming radiation of $\frac{c}{\sqrt{3}}$ instead of the actual speed of light $\pr{c}$ \cite{olson-auer-hall-2000}.
+	
+	\ind The diffusion approximation is derived from the $P_1$ equations by making the assumption that the time derivative of the radiation flux is negligibly small and recombining terms in \eqn{p1_first} to find an expression for the radiation flux, also known as Fick's law
+	\begin{equation}
+		\bFg\qddepg = -\frac{c}{3\kapg\pr{T}}\grad\eg\qddepg.
+	\end{equation}
+	
+	This is substituted into \eqn{p1_zero} to give the multigroup radiation diffusion equation
+	\begin{equation}
+		\dt{\eg\qddepg} - \grad\cdot\pr{cD_g\pr{T}\grad\eg\qddepg} + c\kapg\pr{T}\eg\qddepg = 4\pi\kapg\pr{T}\Bg\pr{T},
+	\end{equation}
+	
+	where the diffusion coefficient is
+	\begin{equation}
+		D_g\pr{T} = \frac{1}{3\kapg\pr{T}}.
+	\end{equation}
+	
+	The diffusion equation is also correct to first order in the optically thick limit \cite{Morel-2000}, so one would expect the diffusion solution to be as accurate as $P_1$ in this limit. In the optically thin limit, diffusion suffers a different problem than experienced with $P_1$ and propagates radiation with infinite speed.
+	
+	\ind The $P_{1/3}$ approximation \cite{olson-auer-hall-2000} is derived from the $P_1$ equations and aims to modify the radiation propagation speed in the optically thin limit in the $P_1$ model. The $P_{1/3}$ approximation introduces a weight of $\frac{1}{3}$ to the time derivative of the radiation flux which reforms the radiation momentum balance equation \eqref{p1_first} to
+	\begin{equation}
+		\frac{1}{3c}\dt{\bFg\qddepg} + \frac{c}{3}\grad\cdot\eg\qddepg + \kapg\pr{T}\bFg\qddepg = 0.
+	\end{equation}
+
+	As with $P_1$, the $P_{1/3}$ equations are correct to first order in the optically thick limit \cite{Morel-2000}, so the solution should be as accurate as $P_1$ in this limit.
+	
+%=================================================================================
+% POD
+%=================================================================================
+\subsection{The Proper Orthogonal Decomposition} \label{sec:pod}
+	Just as those classical ROMs presented in Sec. \ref{sec:classical_roms}, the new ROMs presented in this study avoid any use of the RT equation. Instead of relying on some estimation for the angular dependence of the radiation intensity to form a new set of low-order equations like the $P_1$ Eqs. \eqref{p1_sys} however, we take on a data-driven approach leveraging a method known as the proper orthogonal decomposition (POD).
+	
+	\ind The POD was created originally to solve problems efficiently by using previously found data to estimate new solutions \cite{lumley-1981,Aubry-pod-1991,smith-moehlis-holmes-2005}. Using the POD involves first solving the given problem and creating a database of snapshots of the solution $\bA\in\real^{\chi,\tau}$ where $\chi$ and $\tau$ are the number of discrete spatial and temporal nodes respectively. The singular value decomposition (SVD) is applied to the data matrix $\bA$. The SVD  presents the matrix in the form of 
+	\begin{equation}
+		\bA = \bU\bSig\bV^T, \label{svd_form}
+	\end{equation}
+	
+	where $\bU \in \real^{\chi,k}$ holds the left singular vectors of $\bA$ in its columns, $\bSig \in \real^{k,k}$ is diagonal whose entries are the singular values of $\bA$ in descending magnitude, and $\bV \in \real^{\tau,k}$ holds the right singular vectors of $\bA$ in its columns, where $k = \min\pr{\chi,\tau}$ is the rank of $\bA$. The matrix $\bA$ is approximated as a matrix of rank $r<k$ by reducing the dimension $k$ to $r$ in its SVD, also known as a truncated SVD (TSVD). This effectively removes columns from $\bU$ and $\bV$, and diagonal values from $\bSig$. Due to the properties of the SVD, this reduced rank matrix $\bA^*$ is the closest matrix of rank $r$ to the full rank matrix $\bA$ in the Frobenius norm.
+	
+	\ind To determine the rank $r$ in this study, a singular value relative cutoff criteria is defined $\varepsilon_\sigma < 1$ such that for the set of singular values of $\bA$, $(\sigma_{1,g},\dots,\sigma_{k,g})$, there will be a $r \leq k$ such that
+	\begin{equation}
+		\frac{\sigma_{n}}{\sigma_{1}} \geq \varepsilon_\sigma \label{cutoff_eps}
+	\end{equation}
+	
+	for all $n \leq r$. The reduced rank approximation of $\bA$ is thus given as $\bA^{*}  = \bU^*\bSig^*\pr{\bV^{*}}^T $ where $\bU^* \in \real^{\chi,r}$, $\bSig^* \in \real^{r,r}$, $\bV_g^{*} \in \real^{\tau,r}$. The ratio of energy contained in the first $n$ POD modes to the total energy of all POD modes \cite{Benner-siam-2015} is
+	\begin{equation}
+		\gamma_n = \frac{\sum_{i=1}^{n} \sigma_i^2}{\sum_{i=1}^{k} \sigma_i^2}, \label{worth_gam}
+	\end{equation}
+	This can also be interpreted as the ratio of modeled to total energy contained in the data snapshots \cite{gubisch-volkwein}.
+	
+	\ind The reduced rank database is then used to inform new problems whose solution is unknown, allowing for a more efficient and reduced-order solve. Due to the data-driven nature of the POD, the accuracy of this method is strongly dependent on how well $\bA^*$ approximates the solution of the unknown problem to be solved. Thus the POD is most effective at solving problems that are similar to the problems whose solution was used to form $\bA$.
+	
+%=================================================================================
+% POD
+%=================================================================================
+\section{Structure of this Work} \label{sec:loqd-pod_roms}
+	The ROMs presented in the later chapters of this study are made of two components, combining the MLQD method with the POD. The hierarchy of LOQD problems defined by the MLQD method can be isolated from the high-order RT equation by means of the POD. In fact, the grey LOQD system can be isolated from the multigroup LOQD system using the POD. The following chapters of this work will describe the methods used to develop these new ROMs in closer detail, and describe their performance. Chapter \ref{chap-two} describes in detail the discretization of the RT equation, all LOQD systems, and the MEB equation, including discussion on the use of Newton's method for handling nonlinear iterations in the effective grey LOQD problem. Chapter \ref{chap-three} describes the first of two ROMs developed here in which the POD is applied to approximate the group QD tensor \cite{jc-dya-m&c2019}. Chapter \ref{chap-four} describes the second of the ROMs where the POD is applied to approximate the group QD tensor and the multigroup LOQD solution \cite{jc-dya-tans2019}. The first ROM has been published in the proceedings of and presented at the 2019 ANS M\&C conference in Portland, Oregon; the second ROM will appear in the proceedings of the 2019 ANS annual winter meeting to be held in Washington, DC where it will be presented by the author.
+	
+	\ind This work was supported by Defense Threat Reduction Agency (Basic and Applied Sciences Department of Research and Development Directorate) under grant HDTRA11810042. The content of this information does not necessarily reflect the position or the policy of the federal government, and no official endorsement should be inferred.
